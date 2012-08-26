@@ -6,7 +6,7 @@
 	<artifactId>openmrs</artifactId>
 	<version>1.10.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>OpenMRS</name>
+	<name>OpenMRS2</name>
 	<description>Master project for the modules of OpenMRS</description>
 	<url>http://openmrs.org</url>
 
