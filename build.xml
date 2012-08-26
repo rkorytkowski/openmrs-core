@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- *********************************************************** -->
-<!-- ** Ant build script for OpenMRS                          ** -->
+<!-- ** Ant build script for OpenMRS2                          ** -->
 <!-- **                                                       ** -->
 <!-- ** This file is provided for those that cannot use       ** -->
 <!-- ** maven. Using "mvn" instead of "ant" is recommended    ** -->
