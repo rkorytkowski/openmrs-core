@@ -8,7 +8,7 @@ Background.
      OpenMRS, Inc. ("OpenMRS"), including, as applicable, its licensors, is
      the owner of the Original Code (as that term is defined below). The
      Original Code as well as all Modifications (as that term is defined
-     below) are made available for use, modification, and distribution
+     below) are made available for use, modificatiosn, and distribution
      solely pursuant to and in accordance with the terms and conditions of
      this Public License. PLEASE NOTE THAT WHILE THIS PUBLIC LICENSE IS
      BASED UPON THE MOZILLA PUBLIC LICENSE VERSION 1.1, THIS PUBLIC LICENSE
