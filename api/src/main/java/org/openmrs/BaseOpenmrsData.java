@@ -51,6 +51,22 @@ public abstract class BaseOpenmrsData extends BaseOpenmrsObject implements Openm
 	public BaseOpenmrsData() {
 	}
 	
+	/**
+	 * @since 1.10
+	 */
+	public BaseOpenmrsData(BaseOpenmrsData copy) {
+		super(copy);
+		
+		creator = copy.creator;
+		dateCreated = copy.dateCreated;
+		changedBy = copy.changedBy;
+		dateChanged = copy.dateChanged;
+		voided = copy.voided;
+		dateVoided = copy.dateVoided;
+		voidedBy = copy.voidedBy;
+		voidReason = copy.voidReason;
+	}
+	
 	//***** Property Access *****
 	
 	/**

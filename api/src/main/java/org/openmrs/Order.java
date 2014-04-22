@@ -13,11 +13,11 @@
  */
 package org.openmrs;
 
+import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.order.OrderUtil;
-
-import java.util.Date;
 
 /**
  * Dates should be interpreted as follows: If startDate is null then the order has been going on
@@ -54,64 +54,81 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	
 	// Fields
 	
-	private Integer orderId;
+	protected Integer orderId;
 	
-	private Patient patient;
+	protected Patient patient;
 	
-	private Concept concept;
+	protected Concept concept;
 	
-	private String instructions;
+	protected String instructions;
 	
-	private Date startDate;
+	protected Date startDate;
 	
-	private Date autoExpireDate;
+	protected Date autoExpireDate;
 	
-	private Encounter encounter;
+	protected Encounter encounter;
 	
-	private Provider orderer;
+	protected Provider orderer;
 	
-	private Date dateStopped;
+	protected Date dateStopped;
 	
-	private Concept orderReason;
+	protected Concept orderReason;
 	
-	private String accessionNumber;
+	protected String accessionNumber;
 	
-	private String orderReasonNonCoded;
+	protected String orderReasonNonCoded;
 	
-	private Urgency urgency = Urgency.ROUTINE;
+	protected Urgency urgency = Urgency.ROUTINE;
 	
-	private String orderNumber;
+	protected String orderNumber;
 	
-	private String commentToFulfiller;
+	protected String commentToFulfiller;
 	
-	private CareSetting careSetting;
+	protected CareSetting careSetting;
 	
-	private OrderType orderType;
+	protected OrderType orderType;
 	
-	private Date scheduledDate;
+	protected Date scheduledDate;
 	
 	/**
 	 * Allows orders to be linked to a previous order - e.g., an order discontinue ampicillin linked
 	 * to the original ampicillin order (the D/C gets its own order number)
 	 */
-	private Order previousOrder;
+	protected Order previousOrder;
 	
 	/**
 	 * Represents the action being taken on an order.
 	 * 
 	 * @see org.openmrs.Order.Action
 	 */
-	private Action action = Action.NEW;
-	
-	// Constructors
-	
-	/** default constructor */
-	public Order() {
+	protected Action action = Action.NEW;
+
+	protected Order() {
 	}
 	
-	/** constructor with id */
-	public Order(Integer orderId) {
-		this.orderId = orderId;
+	public Order(Order copy) {
+		super(copy);
+		
+		orderId = copy.orderId;
+		patient = copy.patient;
+		concept = copy.concept;
+		instructions = copy.instructions;
+		startDate = copy.startDate;
+		autoExpireDate = copy.autoExpireDate;
+		encounter = copy.encounter;
+		orderer = copy.orderer;
+		dateStopped = copy.dateStopped;
+		orderReason = copy.orderReason;
+		accessionNumber = copy.accessionNumber;
+		orderReasonNonCoded = copy.orderReasonNonCoded;
+		urgency = copy.urgency;
+		orderNumber = copy.orderNumber;
+		commentToFulfiller = copy.commentToFulfiller;
+		careSetting = copy.careSetting;
+		orderType = copy.orderType;
+		scheduledDate = copy.scheduledDate;
+		previousOrder = copy.previousOrder;
+		action = copy.action;
 	}
 	
 	/**
@@ -132,33 +149,33 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @return Returns the Order that was passed in, with state copied into it
 	 */
 	protected Order copyHelper(Order target) {
-		target.setPatient(getPatient());
-		target.setConcept(getConcept());
-		target.setOrderType(getOrderType());
-		target.setInstructions(getInstructions());
-		target.setStartDate(getStartDate());
-		target.setAutoExpireDate(getAutoExpireDate());
-		target.setEncounter(getEncounter());
-		target.setOrderer(getOrderer());
-		target.setCreator(getCreator());
+		target.patient = getPatient();
+		target.concept = getConcept();
+		target.orderType = getOrderType();
+		target.instructions = getInstructions();
+		target.startDate = getStartDate();
+		target.autoExpireDate = getAutoExpireDate();
+		target.encounter = getEncounter();
+		target.orderer = getOrderer();
+		target.creator = getCreator();
 		target.setDateCreated(getDateCreated());
-		target.setDateStopped(getDateStopped());
-		target.setOrderReason(getOrderReason());
-		target.setOrderReasonNonCoded(getOrderReasonNonCoded());
-		target.setAccessionNumber(getAccessionNumber());
+		target.dateStopped = getDateStopped();
+		target.orderReason = getOrderReason();
+		target.orderReasonNonCoded = getOrderReasonNonCoded();
+		target.accessionNumber = getAccessionNumber();
 		target.setVoided(isVoided());
 		target.setVoidedBy(getVoidedBy());
 		target.setDateVoided(getDateVoided());
 		target.setVoidReason(getVoidReason());
-		target.setUrgency(getUrgency());
-		target.setCommentToFulfiller(getCommentToFulfiller());
+		target.urgency = getUrgency();
+		target.commentToFulfiller = getCommentToFulfiller();
 		target.previousOrder = getPreviousOrder();
 		target.action = getAction();
 		target.orderNumber = getOrderNumber();
-		target.setCareSetting(getCareSetting());
+		target.careSetting = getCareSetting();
 		target.setChangedBy(getChangedBy());
 		target.setDateChanged(getDateChanged());
-		target.setScheduledDate(getScheduledDate());
+		target.scheduledDate = getScheduledDate();
 		return target;
 	}
 	
@@ -167,16 +184,8 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	/**
 	 * @return Returns the autoExpireDate.
 	 */
-	
 	public Date getAutoExpireDate() {
 		return autoExpireDate;
-	}
-	
-	/**
-	 * @param autoExpireDate The autoExpireDate to set.
-	 */
-	public void setAutoExpireDate(Date autoExpireDate) {
-		this.autoExpireDate = autoExpireDate;
 	}
 	
 	/**
@@ -186,27 +195,13 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		return concept;
 	}
 	
-	/**
-	 * @param concept The concept to set.
-	 */
-	public void setConcept(Concept concept) {
-		this.concept = concept;
-	}
-	
+		
 	/**
 	 * @return the scheduledDate
 	 * @since 1.10
 	 */
 	public Date getScheduledDate() {
 		return scheduledDate;
-	}
-	
-	/**
-	 * @param scheduledDate the date to set
-	 * @since 1.10
-	 */
-	public void setScheduledDate(Date scheduledDate) {
-		this.scheduledDate = scheduledDate;
 	}
 	
 	/**
@@ -218,25 +213,10 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * @param dateStopped The dateStopped to set.
-	 * @since 1.10
-	 */
-	public void setDateStopped(Date dateStopped) {
-		this.dateStopped = dateStopped;
-	}
-	
-	/**
 	 * @return Returns the orderReason.
 	 */
 	public Concept getOrderReason() {
 		return orderReason;
-	}
-	
-	/**
-	 * @param orderReason The orderReason to set.
-	 */
-	public void setOrderReason(Concept orderReason) {
-		this.orderReason = orderReason;
 	}
 	
 	/**
@@ -247,24 +227,10 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * @param encounter The encounter to set.
-	 */
-	public void setEncounter(Encounter encounter) {
-		this.encounter = encounter;
-	}
-	
-	/**
 	 * @return Returns the instructions.
 	 */
 	public String getInstructions() {
 		return instructions;
-	}
-	
-	/**
-	 * @param instructions The instructions to set.
-	 */
-	public void setInstructions(String instructions) {
-		this.instructions = instructions;
 	}
 	
 	/**
@@ -275,24 +241,10 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * @param accessionNumber The accessionNumber to set.
-	 */
-	public void setAccessionNumber(String accessionNumber) {
-		this.accessionNumber = accessionNumber;
-	}
-	
-	/**
 	 * @return Returns the orderer.
 	 */
 	public Provider getOrderer() {
 		return orderer;
-	}
-	
-	/**
-	 * @param orderer The orderer to set.
-	 */
-	public void setOrderer(Provider orderer) {
-		this.orderer = orderer;
 	}
 	
 	/**
@@ -303,24 +255,10 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * @param orderId The orderId to set.
-	 */
-	public void setOrderId(Integer orderId) {
-		this.orderId = orderId;
-	}
-	
-	/**
 	 * @return Returns the startDate.
 	 */
 	public Date getStartDate() {
 		return startDate;
-	}
-	
-	/**
-	 * @param startDate The startDate to set.
-	 */
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
 	}
 	
 	/**
@@ -331,26 +269,11 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * @param orderReasonNonCoded The orderReasonNonCoded to set.
-	 */
-	public void setOrderReasonNonCoded(String orderReasonNonCoded) {
-		this.orderReasonNonCoded = orderReasonNonCoded;
-	}
-	
-	/**
 	 * @return the commentToFulfiller
 	 * @since 1.10
 	 */
 	public String getCommentToFulfiller() {
 		return commentToFulfiller;
-	}
-	
-	/**
-	 * @param commentToFulfiller The commentToFulfiller to set
-	 * @since 1.10
-	 */
-	public void setCommentToFulfiller(String commentToFulfiller) {
-		this.commentToFulfiller = commentToFulfiller;
 	}
 	
 	/**
@@ -445,10 +368,6 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 		return patient;
 	}
 	
-	public void setPatient(Patient patient) {
-		this.patient = patient;
-	}
-	
 	public Integer getId() {
 		return getOrderId();
 	}
@@ -466,8 +385,7 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
 	 */
 	public void setId(Integer id) {
-		setOrderId(id);
-		
+		orderId = id;
 	}
 	
 	/**
@@ -476,14 +394,6 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 */
 	public Urgency getUrgency() {
 		return urgency;
-	}
-	
-	/**
-	 * @param urgency the urgency to set
-	 * @since 1.9.2
-	 */
-	public void setUrgency(Urgency urgency) {
-		this.urgency = urgency;
 	}
 	
 	/**
@@ -505,16 +415,6 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * Sets the previous order.
-	 * 
-	 * @since 1.10
-	 * @param previousOrder the previous order to set.
-	 */
-	public void setPreviousOrder(Order previousOrder) {
-		this.previousOrder = previousOrder;
-	}
-	
-	/**
 	 * Gets the action
 	 * 
 	 * @return the action
@@ -522,16 +422,6 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	 */
 	public Action getAction() {
 		return action;
-	}
-	
-	/**
-	 * Sets the ation
-	 * 
-	 * @param action the action to set
-	 * @since 1.10
-	 */
-	public void setAction(Action action) {
-		this.action = action;
 	}
 	
 	/**
@@ -545,77 +435,12 @@ public class Order extends BaseOpenmrsData implements java.io.Serializable {
 	}
 	
 	/**
-	 * Sets the careSetting
-	 * 
-	 * @param careSetting the action to set
-	 * @since 1.10
-	 */
-	public void setCareSetting(CareSetting careSetting) {
-		this.careSetting = careSetting;
-	}
-	
-	/**
 	 * Get the {@link org.openmrs.OrderType}
 	 * 
 	 * @return the {@link org.openmrs.OrderType}
 	 */
 	public OrderType getOrderType() {
 		return orderType;
-	}
-	
-	/**
-	 * Set the {@link org.openmrs.OrderType}
-	 * 
-	 * @param orderType the {@link org.openmrs.OrderType}
-	 */
-	public void setOrderType(OrderType orderType) {
-		this.orderType = orderType;
-	}
-	
-	/**
-	 * Creates a discontinuation order for this order, sets the previousOrder and action fields,
-	 * note that the discontinuation order needs to be saved for the discontinuation to take effect
-	 * 
-	 * @return the newly created order
-	 * @since 1.10
-	 * @should set all the relevant fields
-	 */
-	public Order cloneForDiscontinuing() {
-		Order newOrder = new Order();
-		newOrder.setCareSetting(this.getCareSetting());
-		newOrder.setConcept(this.getConcept());
-		newOrder.setAction(Action.DISCONTINUE);
-		newOrder.setPreviousOrder(this);
-		newOrder.setPatient(this.getPatient());
-		newOrder.setOrderType(getOrderType());
-		
-		return newOrder;
-	}
-	
-	/**
-	 * Creates an order for revision from this order, sets the previousOrder and action field.
-	 * 
-	 * @return the newly created order
-	 * @since 1.10
-	 * @should set all the relevant fields
-	 */
-	public Order cloneForRevision() {
-		Order newOrder = new Order();
-		newOrder.setCareSetting(this.getCareSetting());
-		newOrder.setConcept(this.getConcept());
-		newOrder.setAction(Action.REVISE);
-		newOrder.setPreviousOrder(this);
-		newOrder.setPatient(this.getPatient());
-		newOrder.setOrderType(this.getOrderType());
-		newOrder.setScheduledDate(getScheduledDate());
-		newOrder.setInstructions(this.getInstructions());
-		newOrder.setUrgency(this.getUrgency());
-		newOrder.setCommentToFulfiller(this.getCommentToFulfiller());
-		newOrder.setAccessionNumber(this.getAccessionNumber());
-		newOrder.setAutoExpireDate(this.getAutoExpireDate());
-		newOrder.setOrderReason(this.getOrderReason());
-		newOrder.setOrderReasonNonCoded(this.getOrderReasonNonCoded());
-		return newOrder;
 	}
 	
 	/**

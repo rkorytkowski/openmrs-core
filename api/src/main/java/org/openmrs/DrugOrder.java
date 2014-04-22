@@ -33,43 +33,42 @@ public class DrugOrder extends Order implements java.io.Serializable {
 	
 	// Fields
 	
-	private Double dose;
+	protected Double dose;
 	
-	private Concept doseUnits;
+	protected Concept doseUnits;
 	
-	private OrderFrequency frequency;
+	protected OrderFrequency frequency;
 	
-	private Boolean asNeeded = false;
+	protected Boolean asNeeded = false;
 	
-	private Double quantity;
+	protected Double quantity;
 	
-	private Concept quantityUnits;
+	protected Concept quantityUnits;
 	
-	private Drug drug;
+	protected Drug drug;
 	
-	private String asNeededCondition;
+	protected String asNeededCondition;
 	
-	private DosingType dosingType = DosingType.SIMPLE;
+	protected DosingType dosingType = DosingType.SIMPLE;
 	
-	private Integer numRefills;
+	protected Integer numRefills;
 	
-	private String dosingInstructions;
+	protected String dosingInstructions;
 	
-	private Double duration;
+	protected Double duration;
 	
-	private Concept durationUnits;
+	protected Concept durationUnits;
 	
-	private Concept route;
+	protected Concept route;
 	
 	// Constructors
 	
 	/** default constructor */
 	public DrugOrder() {
 	}
-	
-	/** constructor with id */
-	public DrugOrder(Integer orderId) {
-		this.setOrderId(orderId);
+
+	public DrugOrder(DrugOrder copy) {
+		super(copy);
 	}
 	
 	/**
@@ -396,66 +395,6 @@ public class DrugOrder extends Order implements java.io.Serializable {
 	 */
 	public void setDurationUnits(Concept durationUnits) {
 		this.durationUnits = durationUnits;
-	}
-	
-	/**
-	 * @see org.openmrs.Order#cloneForDiscontinuing()
-	 * @should set all the relevant fields
-	 * @since 1.10
-	 */
-	@Override
-	public DrugOrder cloneForDiscontinuing() {
-		DrugOrder newOrder = new DrugOrder();
-		newOrder.setCareSetting(this.getCareSetting());
-		newOrder.setConcept(this.getConcept());
-		newOrder.setAction(Action.DISCONTINUE);
-		newOrder.setPreviousOrder(this);
-		newOrder.setPatient(this.getPatient());
-		newOrder.setDrug(this.getDrug());
-		newOrder.setOrderType(this.getOrderType());
-		return newOrder;
-	}
-	
-	/**
-	 * Creates a DrugOrder for revision from this order, sets the previousOrder, action field and
-	 * other drug order fields.
-	 * 
-	 * @return the newly created order
-	 * @since 1.10
-	 * @should set all the relevant fields
-	 */
-	@Override
-	public DrugOrder cloneForRevision() {
-		DrugOrder newOrder = new DrugOrder();
-		newOrder.setCareSetting(this.getCareSetting());
-		newOrder.setConcept(this.getConcept());
-		newOrder.setAction(Action.REVISE);
-		newOrder.setPreviousOrder(this);
-		newOrder.setPatient(this.getPatient());
-		newOrder.setOrderType(this.getOrderType());
-		newOrder.setInstructions(this.getInstructions());
-		newOrder.setUrgency(this.getUrgency());
-		newOrder.setCommentToFulfiller(this.getCommentToFulfiller());
-		newOrder.setAccessionNumber(this.getAccessionNumber());
-		newOrder.setAutoExpireDate(this.getAutoExpireDate());
-		newOrder.setOrderReason(this.getOrderReason());
-		newOrder.setOrderReasonNonCoded(this.getOrderReasonNonCoded());
-		newOrder.setScheduledDate(getScheduledDate());
-		newOrder.setDose(this.getDose());
-		newOrder.setDoseUnits(this.getDoseUnits());
-		newOrder.setFrequency(this.getFrequency());
-		newOrder.setAsNeeded(this.getAsNeeded());
-		newOrder.setAsNeededCondition(this.getAsNeededCondition());
-		newOrder.setQuantity(this.getQuantity());
-		newOrder.setQuantityUnits(this.getQuantityUnits());
-		newOrder.setDrug(this.getDrug());
-		newOrder.setDosingType(this.getDosingType());
-		newOrder.setDosingInstructions(this.getDosingInstructions());
-		newOrder.setDuration(this.getDuration());
-		newOrder.setDurationUnits(this.getDurationUnits());
-		newOrder.setRoute(this.getRoute());
-		newOrder.setNumRefills(this.getNumRefills());
-		return newOrder;
 	}
 	
 	public String toString() {

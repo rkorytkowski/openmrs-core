@@ -351,14 +351,12 @@ public class Encounter extends BaseOpenmrsData implements java.io.Serializable {
 	 * @param order
 	 * @should add order with null values
 	 * @should not fail with null obs passed to add order
-	 * @should set encounter attribute
 	 * @should add order to non nul initial order set
 	 */
 	public void addOrder(Order order) {
 		if (orders == null)
 			orders = new HashSet<Order>();
 		if (order != null) {
-			order.setEncounter(this);
 			orders.add(order);
 		}
 	}

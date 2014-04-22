@@ -42,6 +42,7 @@ import org.openmrs.CareSetting;
 import org.openmrs.Concept;
 import org.openmrs.ConceptClass;
 import org.openmrs.ConceptName;
+import org.openmrs.DraftDrugOrder;
 import org.openmrs.Drug;
 import org.openmrs.DrugOrder;
 import org.openmrs.Encounter;
@@ -609,11 +610,10 @@ public class OrderServiceTest extends BaseContextSensitiveTest {
 	@Test
 	@Verifies(value = "discontinue existing active order if new order being saved with action to discontinue", method = "saveOrder(Order)")
 	public void saveOrder_shouldDiscontinueExistingActiveOrderIfNewOrderBeingSavedWithActionToDiscontinue() throws Exception {
-		DrugOrder order = new DrugOrder();
+		DraftDrugOrder order = new DraftDrugOrder(orderService.getOrderType(1), providerService.getProvider(1), encounterService.getEncounter(5));
 		order.setAction(Order.Action.DISCONTINUE);
 		order.setOrderReasonNonCoded("Discontinue this");
 		order.setEncounter(encounterService.getEncounter(5));
-		order.setPatient(patientService.getPatient(7));
 		order.setOrderer(providerService.getProvider(1));
 		order.setConcept(conceptService.getConcept(88));
 		order.setCareSetting(orderService.getCareSetting(1));

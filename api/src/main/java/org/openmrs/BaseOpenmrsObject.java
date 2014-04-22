@@ -23,6 +23,16 @@ public abstract class BaseOpenmrsObject implements OpenmrsObject {
 	
 	private String uuid = UUID.randomUUID().toString();
 	
+	public BaseOpenmrsObject() {
+	}
+	
+	/**
+	 * @since 1.10
+	 */
+	public BaseOpenmrsObject(BaseOpenmrsObject copy) {
+		uuid = copy.uuid;
+	}
+	
 	/**
 	 * @see org.openmrs.OpenmrsObject#getUuid()
 	 */
