@@ -55,7 +55,7 @@ import org.openmrs.scheduler.SchedulerService;
  */
 public class OpenmrsClassLoader extends URLClassLoader {
 	
-	private static Log log = LogFactory.getLog(OpenmrsClassLoader.class);
+	private static final Log log = LogFactory.getLog(OpenmrsClassLoader.class);
 	
 	private static File libCacheFolder;
 	
@@ -130,6 +130,15 @@ public class OpenmrsClassLoader extends URLClassLoader {
 	}
 	
 	/**
+	 * For test purposes only.
+	 * 
+	 * @param classLoader
+	 */
+	static void setInstance(OpenmrsClassLoader classLoader) {
+		OpenmrsClassLoaderHolder.INSTANCE = classLoader;
+	}
+	
+	/**
 	 * It loads classes from the web container class loader first (parent class loader) and then
 	 * tries module class loaders.
 	 * 
@@ -158,7 +167,7 @@ public class OpenmrsClassLoader extends URLClassLoader {
 			if (c == null) {
 				// Finally try loading from modules
 				String packageName = StringUtils.substringBeforeLast(name, ".");
-				Set<ModuleClassLoader> moduleClassLoaders = ModuleFactory.getModuleClassLoadersForPackage(packageName);
+				Set<ModuleClassLoader> moduleClassLoaders = getModuleClassLoadersForPackage(packageName);
 				for (ModuleClassLoader moduleClassLoader : moduleClassLoaders) {
 					try {
 						c = moduleClassLoader.loadClass(name);
@@ -184,6 +193,16 @@ public class OpenmrsClassLoader extends URLClassLoader {
 		
 		return c;
 	}
+
+	/**
+	 * Exclusively for testing.
+	 * 
+	 * @param packageName
+	 * @return moduleClassLoaders
+	 */
+	Set<ModuleClassLoader> getModuleClassLoadersForPackage(String packageName) {
+	    return ModuleFactory.getModuleClassLoadersForPackage(packageName);
+    }
 	
 	private Class<?> getCachedClass(String name) {
 		WeakReference<Class<?>> ref = cachedClasses.get(name);
@@ -434,9 +453,6 @@ public class OpenmrsClassLoader extends URLClassLoader {
 				}
 			}
 		}
-		
-		// now we can clear the log field on this class
-		OpenmrsClassLoader.log = null;
 		
 		getInstance().cachedClasses.clear();
 	}
