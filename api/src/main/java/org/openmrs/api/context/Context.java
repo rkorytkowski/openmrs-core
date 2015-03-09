@@ -10,14 +10,7 @@
 package org.openmrs.api.context;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
@@ -232,7 +225,7 @@ public class Context {
 		Object[] arr = userContextHolder.get();
 		
 		if (log.isTraceEnabled()) {
-			log.trace("Getting user context " + arr + " from userContextHolder " + userContextHolder);
+			log.trace("Getting user context " + Arrays.toString(arr) + " from userContextHolder " + userContextHolder);
 		}
 		
 		if (arr == null) {

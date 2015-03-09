@@ -9,12 +9,7 @@
  */
 package org.openmrs.web.controller.patient;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -55,7 +50,7 @@ public class MergePatientsFormController extends SimpleFormController {
 			log.debug("Error name: " + e.getObjectName());
 			log.debug("Error code: " + e.getCode());
 			log.debug("Error message: " + e.getDefaultMessage());
-			log.debug("Error args: " + e.getArguments());
+			log.debug("Error args: " + Arrays.toString(e.getArguments()));
 			log.debug("Error codes: " + e.getCodes());
 		}
 		
