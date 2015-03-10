@@ -10,8 +10,15 @@
 package org.openmrs.api.context;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
-
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.Arrays;
 import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
@@ -1269,7 +1276,7 @@ public class Context {
 	
 	/**
 	 * @since 1.9
-	 * @see ServiceCotext#getDatatypeService()
+	 * @see ServiceContext#getDatatypeService()
 	 */
 	public static DatatypeService getDatatypeService() {
 		return getServiceContext().getDatatypeService();
