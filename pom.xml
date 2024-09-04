@@ -1126,7 +1126,7 @@
 		<jacksonVersion>2.13.3</jacksonVersion>
 		<junitVersion>5.8.2</junitVersion>
 		<mockitoVersion>3.12.4</mockitoVersion>
-		<hamcrestVersion>2.2</hamcrestVersion>
+		<hamcrestVersion>3.0</hamcrestVersion>
 
 		<slf4jVersion>1.7.36</slf4jVersion>
 		<log4jVersion>2.18.0</log4jVersion>
