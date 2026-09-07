@@ -12,6 +12,7 @@ package org.openmrs.api.db.hibernate;
 import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,6 +164,21 @@ public class HibernateContextDAO implements ContextDAO {
 
 			// if the username and password match, hydrate the user and return it
 			if (passwordOnRecord != null && Security.checkPassword(passwordOnRecord, password + saltOnRecord)) {
+				if (!Security.isUpgradedHash(passwordOnRecord)) {
+					// Transparently rewrite legacy (SHA-512/SHA-1) hashes to the stronger, id-prefixed
+					// format on next successful login, keeping the same salt. Done as a direct update
+					// here (rather than via UserDAO#changePassword, which restricts its caller to
+					// UserServiceImpl) since this DAO already reads the raw password/salt columns
+					// directly above. changed_by/date_changed are set to the authenticating user/now,
+					// same as any other password change, even though the cleartext password itself is
+					// unchanged - there is no other user to attribute a login-time rewrite to.
+					String upgradedHash = Security.encodePassword(password, saltOnRecord);
+					session.createNativeQuery(
+					    "update users set password = ?1, changed_by = ?2, date_changed = ?3 where user_id = ?2")
+					        .setParameter(1, upgradedHash).setParameter(2, candidateUser.getUserId())
+					        .setParameter(3, new Date()).executeUpdate();
+				}
+
 				// hydrate the user object
 				candidateUser.getAllRoles().size();
 				candidateUser.getUserProperties().size();

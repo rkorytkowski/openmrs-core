@@ -106,8 +106,73 @@ public class Security {
 			throw new APIException("password.cannot.be.null", (Object[]) null);
 		}
 
+		if (isUpgradedHash(hashedPassword)) {
+			PasswordEncoder encoder = resolvePasswordEncoder();
+			// An upgraded (id-prefixed) hash cannot be verified by the legacy comparison below, which
+			// would never match it anyway; fail closed if the encoder bean isn't available yet rather
+			// than falling through.
+			return encoder != null && encoder.matches(sha256Hex(passwordToHash), hashedPassword);
+		}
+
 		return hashedPassword.equals(encodeString(passwordToHash)) || hashedPassword.equals(encodeStringSHA1(passwordToHash))
 		        || hashedPassword.equals(incorrectlyEncodeString(passwordToHash));
+	}
+
+	/**
+	 * Hashes <code>rawPassword + salt</code> using the Spring Security {@link PasswordEncoder}
+	 * registered as the <code>openmrsPasswordEncoder</code> bean (BCrypt by default, see
+	 * {@link org.openmrs.security.OpenmrsPasswordEncoderConfig}), producing an id-prefixed hash (e.g.
+	 * <code>{bcrypt}...</code>) that {@link #hashMatches(String, String)} recognizes and verifies
+	 * accordingly. Unlike {@link #encodeString(String)}, which remains plain SHA-512 with no prefix for
+	 * its other, unrelated callers (activation keys, secret answers), this method is used only for the
+	 * password itself.
+	 *
+	 * @param rawPassword the plain-text password to hash
+	 * @param salt the salt to combine with the password before hashing
+	 * @return an id-prefixed password hash
+	 * @since 3.0.0
+	 */
+	public static String encodePassword(String rawPassword, String salt) {
+		PasswordEncoder encoder = resolvePasswordEncoder();
+		if (encoder == null) {
+			// Spring context not available yet (very early bootstrap); preserve pre-3.0.0 behavior
+			// rather than fail.
+			return encodeString(rawPassword + salt);
+		}
+		return encoder.encode(sha256Hex(rawPassword + salt));
+	}
+
+	/**
+	 * BCrypt (the default delegate behind {@link #encodePassword(String, String)}) rejects inputs over
+	 * 72 bytes, and OpenMRS's 128-character salts routinely push <code>password + salt</code> past that
+	 * limit - so both {@link #encodePassword(String, String)} and the matching branch of
+	 * {@link #hashMatches(String, String)} pre-hash to this fixed-length, 64-character digest before
+	 * delegating to the {@link PasswordEncoder}, a standard pattern for using BCrypt with
+	 * arbitrary-length input.
+	 *
+	 * @param value the string to pre-hash
+	 * @return the SHA-256 hex digest of <code>value</code>
+	 */
+	private static String sha256Hex(String value) {
+		return hexString(digest(value.getBytes(StandardCharsets.UTF_8), "SHA-256"));
+	}
+
+	/**
+	 * @param hash a stored password hash
+	 * @return true if <code>hash</code> was produced by {@link #encodePassword(String, String)} rather
+	 *         than the legacy, unprefixed SHA-512/SHA-1 format
+	 * @since 3.0.0
+	 */
+	public static boolean isUpgradedHash(String hash) {
+		return hash != null && hash.startsWith("{");
+	}
+
+	private static PasswordEncoder resolvePasswordEncoder() {
+		try {
+			return Context.getRegisteredComponent("openmrsPasswordEncoder", PasswordEncoder.class);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	/**
