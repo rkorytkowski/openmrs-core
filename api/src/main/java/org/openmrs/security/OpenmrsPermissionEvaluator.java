@@ -10,8 +10,12 @@
 package org.openmrs.security;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.openmrs.api.context.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -29,9 +33,16 @@ import org.springframework.stereotype.Component;
  * conversions in this codebase use {@code hasPermission(null, '&lt;privilege&gt;')} rather than the
  * built-in {@code hasAuthority('&lt;privilege&gt;')}.
  * <p>
- * The target object/type parameters are ignored: like {@code @Authorized}, this only checks whether
- * the current user holds the named privilege, not any per-instance ownership rule. A future
- * object-aware permission check can be added here without touching existing callers.
+ * When a call names a target - {@code hasPermission(targetDomainObject, permission)} or
+ * {@code hasPermission(targetId, targetType, permission)} - every registered
+ * {@link DomainObjectAuthorizationRule} declaring the target's
+ * {@link DomainObjectAuthorizationRule#getTargetType() type} must also authorize it, on top of the
+ * privilege check above (most-restrictive-wins). Rules are grouped by type once, in the
+ * constructor, rather than filtered on every call - {@code hasPermission(...)} may run once per
+ * element of a large {@code @PostFilter}-ed collection. Core registers none by default: a target
+ * with no rule registered for its type is authorized same as today, so this is purely additive for
+ * modules that need per-instance access control (e.g. restricting which patients a provider may
+ * view).
  * <p>
  * For a no-value {@code @Authorized}'s equivalent - "just require the caller to be authenticated" -
  * no method here is needed: Spring Security's own built-in
@@ -45,14 +56,46 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpenmrsPermissionEvaluator implements PermissionEvaluator {
 
+	private final Map<String, List<DomainObjectAuthorizationRule>> rulesByType;
+
+	@Autowired
+	public OpenmrsPermissionEvaluator(List<DomainObjectAuthorizationRule> rules) {
+		this.rulesByType = rules.stream().collect(Collectors.groupingBy(DomainObjectAuthorizationRule::getTargetType));
+	}
+
 	@Override
 	public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
-		return permission != null && Context.hasPrivilege(permission.toString());
+		if (permission == null || !Context.hasPrivilege(permission.toString())) {
+			return false;
+		}
+		if (targetDomainObject == null) {
+			return true;
+		}
+
+		String targetType = targetDomainObject.getClass().getSimpleName();
+		for (DomainObjectAuthorizationRule rule : rulesByType.getOrDefault(targetType, List.of())) {
+			if (!rule.isAuthorized(authentication, targetDomainObject, permission)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
 	public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType,
 	        Object permission) {
-		return permission != null && Context.hasPrivilege(permission.toString());
+		if (permission == null || !Context.hasPrivilege(permission.toString())) {
+			return false;
+		}
+		if (targetId == null) {
+			return true;
+		}
+
+		for (DomainObjectAuthorizationRule rule : rulesByType.getOrDefault(targetType, List.of())) {
+			if (!rule.isAuthorized(authentication, targetId, targetType, permission)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
