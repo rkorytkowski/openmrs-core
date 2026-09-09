@@ -29,7 +29,6 @@ import org.openmrs.Person;
 import org.openmrs.Privilege;
 import org.openmrs.Role;
 import org.openmrs.User;
-import org.openmrs.annotation.Authorized;
 import org.openmrs.annotation.Logging;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
@@ -55,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -745,7 +745,7 @@ public class UserServiceImpl extends BaseOpenmrsService implements UserService, 
 	 * @see UserService#changePassword(User, String, String)
 	 */
 	@Override
-	@Authorized(PrivilegeConstants.EDIT_USER_PASSWORDS)
+	@PreAuthorize("hasPermission(#user, '" + PrivilegeConstants.EDIT_USER_PASSWORDS + "')")
 	@Logging(ignoredArgumentIndexes = { 1, 2 })
 	public void changePassword(User user, String oldPassword, String newPassword) throws APIException {
 		if (user.getUserId() == null) {
