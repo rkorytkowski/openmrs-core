@@ -19,8 +19,9 @@ import org.openmrs.DiagnosisAttributeType;
 import org.openmrs.Encounter;
 import org.openmrs.Patient;
 import org.openmrs.Visit;
-import org.openmrs.annotation.Authorized;
 import org.openmrs.util.PrivilegeConstants;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * <pre>
@@ -39,7 +40,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized({ PrivilegeConstants.EDIT_DIAGNOSES })
+	@PreAuthorize("hasPermission(#diagnosis, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	Diagnosis save(Diagnosis diagnosis);
 
 	/**
@@ -51,7 +52,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized({ PrivilegeConstants.EDIT_DIAGNOSES })
+	@PreAuthorize("hasPermission(#diagnosis, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	Diagnosis voidDiagnosis(Diagnosis diagnosis, String voidReason);
 
 	/**
@@ -62,7 +63,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized({ PrivilegeConstants.GET_DIAGNOSES })
+	@PreAuthorize("hasPermission(#uuid, 'Diagnosis', '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	Diagnosis getDiagnosisByUuid(String uuid);
 
 	/**
@@ -74,7 +75,8 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized({ PrivilegeConstants.GET_DIAGNOSES })
+	@PreAuthorize("hasPermission(#patient, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
+	@PostFilter("hasPermission(filterObject, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	List<Diagnosis> getDiagnoses(Patient patient, Date fromDate);
 
 	/**
@@ -88,7 +90,8 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized({ PrivilegeConstants.GET_DIAGNOSES })
+	@PreAuthorize("hasPermission(#encounter, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
+	@PostFilter("hasPermission(filterObject, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	List<Diagnosis> getDiagnosesByEncounter(Encounter encounter, boolean primaryOnly, boolean confirmedOnly);
 
 	/**
@@ -102,7 +105,8 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized({ PrivilegeConstants.GET_DIAGNOSES })
+	@PreAuthorize("hasPermission(#visit, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
+	@PostFilter("hasPermission(filterObject, '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	List<Diagnosis> getDiagnosesByVisit(Visit visit, boolean primaryOnly, boolean confirmedOnly);
 
 	/**
@@ -132,7 +136,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized({ PrivilegeConstants.GET_DIAGNOSES })
+	@PreAuthorize("hasPermission(#diagnosisId, 'Diagnosis', '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	Diagnosis getDiagnosis(Integer diagnosisId);
 
 	/**
@@ -146,7 +150,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
 	 *             permission
 	 */
-	@Authorized(PrivilegeConstants.EDIT_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosis, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	Diagnosis unvoidDiagnosis(Diagnosis diagnosis) throws APIException;
 
 	/**
@@ -163,7 +167,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @see #purgeDiagnosis(Diagnosis)
 	 */
-	@Authorized(PrivilegeConstants.DELETE_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosis, '" + PrivilegeConstants.DELETE_DIAGNOSES + "')")
 	void purgeDiagnosis(Diagnosis diagnosis) throws APIException;
 
 	/**
@@ -176,7 +180,8 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES)
+	@PreAuthorize("hasAuthority('" + PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES + "')")
+	@PostFilter("hasPermission(filterObject, '" + PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES + "')")
 	List<DiagnosisAttributeType> getAllDiagnosisAttributeTypes() throws APIException;
 
 	/**
@@ -191,7 +196,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES)
+	@PreAuthorize("hasPermission(#id, 'DiagnosisAttributeType', '" + PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES + "')")
 	DiagnosisAttributeType getDiagnosisAttributeTypeById(Integer id) throws APIException;
 
 	/**
@@ -206,7 +211,8 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES)
+	@PreAuthorize("hasPermission(#uuid, 'DiagnosisAttributeType', '" + PrivilegeConstants.GET_DIAGNOSES_ATTRIBUTE_TYPES
+	        + "')")
 	DiagnosisAttributeType getDiagnosisAttributeTypeByUuid(String uuid) throws APIException;
 
 	/**
@@ -221,7 +227,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.EDIT_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosisAttributeType, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	DiagnosisAttributeType saveDiagnosisAttributeType(DiagnosisAttributeType diagnosisAttributeType) throws APIException;
 
 	/**
@@ -236,7 +242,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.EDIT_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosisAttributeType, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	DiagnosisAttributeType retireDiagnosisAttributeType(DiagnosisAttributeType diagnosisAttributeType, String reason)
 	        throws APIException;
 
@@ -251,7 +257,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.EDIT_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosisAttributeType, '" + PrivilegeConstants.EDIT_DIAGNOSES + "')")
 	DiagnosisAttributeType unretireDiagnosisAttributeType(DiagnosisAttributeType diagnosisAttributeType) throws APIException;
 
 	/**
@@ -264,7 +270,7 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.DELETE_DIAGNOSES)
+	@PreAuthorize("hasPermission(#diagnosisAttributeType, '" + PrivilegeConstants.DELETE_DIAGNOSES + "')")
 	void purgeDiagnosisAttributeType(DiagnosisAttributeType diagnosisAttributeType) throws APIException;
 
 	/**
@@ -279,6 +285,6 @@ public interface DiagnosisService extends OpenmrsService {
 	 *             permission
 	 * @since 2.5.0
 	 */
-	@Authorized(PrivilegeConstants.GET_DIAGNOSES)
+	@PreAuthorize("hasPermission(#uuid, 'DiagnosisAttribute', '" + PrivilegeConstants.GET_DIAGNOSES + "')")
 	DiagnosisAttribute getDiagnosisAttributeByUuid(String uuid) throws APIException;
 }

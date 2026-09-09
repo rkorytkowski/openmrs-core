@@ -22,8 +22,9 @@ them. The Spring Security annotations can express everything it can, plus:
 - **Composable expressions.** SpEL combines checks freely with `and`, `or` and `not`, so a method
   whose rule is not a flat privilege list can state its real rule.
 - **Access to the invocation.** The expression can see the method's arguments and its result
-  (`#p0`, `returnObject`, `filterObject`), so authorization can depend on *what* is being accessed,
-  not only on which privileges the caller holds.
+  (`#argName`, `returnObject`, `filterObject`), so authorization can depend on *what* is being
+  accessed, not only on which privileges the caller holds. Argument names resolve on interface
+  methods because the build compiles with `-parameters`.
 - **Post-invocation filtering.** `@PostFilter` removes the elements a caller is not entitled to see
   from a returned collection, instead of the all-or-nothing outcome a pre-invocation privilege
   check is limited to.
@@ -151,7 +152,6 @@ both, so a module that still throws the deprecated exception keeps working.
 
 | Pitfall | Why | Fix |
 |---|---|---|
-| `#someArgName` silently evaluates to `null` | the build does not compile with `-parameters`, and service annotations sit on interfaces | refer to arguments positionally as `#p0`, or name them with `@P("someArgName")` |
 | A write survives a `@PostAuthorize` denial | method security runs outside the transaction boundary | guard writes with `@PreAuthorize` |
 | A `@PostFilter`ed `@Cacheable` method serves one user's filtered view to everyone | `@PostFilter` filters in place | key the cache by the caller (`UserKeyGenerator.BEAN_NAME`) |
 | A module's error handling stops recognizing a denial | `@Authorized` denies with `AccessDeniedException` as of 3.0.0, not `APIAuthenticationException` | handle `AccessDeniedException`; `ExceptionUtil.rethrowAPIAuthenticationException` covers both |
