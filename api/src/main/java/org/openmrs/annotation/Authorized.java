@@ -29,11 +29,24 @@ import java.lang.annotation.Target;
  *     &#64;Authorized ()
  *     public void getUsersByName(String name);
  * </pre>
+ * <p>
+ * Deprecated as of 3.0.0 in favour of Spring Security's {@code @PreAuthorize},
+ * {@code @PostAuthorize} and {@code @PostFilter} with {@code hasPermission(...)}, which are more
+ * robust: the expressions compose, and they can see the method's arguments and result. Existing
+ * usages are still enforced and are being converted gradually; new code should use the Spring
+ * Security form. See {@code doc/AUTHORIZATION_MIGRATION.md} for the translation table and
+ * {@link org.openmrs.api.ProviderService#getProvider(Integer)} for a converted example. By
+ * convention a method carries one mechanism or the other, never both.
+ *
+ * @deprecated as of 3.0.0, use {@code @PreAuthorize("hasPermission(null, '&lt;privilege&gt;')")}
+ *             instead, or {@code @PostAuthorize}/{@code @PostFilter} where the check needs the
+ *             method's result; see {@code doc/AUTHORIZATION_MIGRATION.md}
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
+@Deprecated(since = "3.0.0")
 public @interface Authorized {
 
 	/**

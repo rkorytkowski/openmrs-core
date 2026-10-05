@@ -42,4 +42,9 @@ services:
         volumes:
             - ./:/openmrs_core
             - ./target/data:/openmrs/data/
+            # Modules to deploy, e.g. built from a sibling checkout. startup-init.sh copies them into
+            # /openmrs/data/modules on every start, and an empty or absent directory deploys none:
+            #   mkdir -p target/modules && cp ../openmrs-module-legacyui/omod/target/*.omod \
+            #       ../openmrs-module-webservices.rest/omod/target/*.omod target/modules/
+            - ./target/modules:/openmrs/distribution/openmrs_modules:ro
         restart: "no"
