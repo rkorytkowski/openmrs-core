@@ -226,7 +226,9 @@ public class Encounter extends BaseChangeableOpenmrsData {
 		List<Obs> leaves = new ArrayList<>();
 
 		if (obsParent.hasGroupMembers()) {
-			for (Obs child : obsParent.getGroupMembers()) {
+			// unfiltered: these leaves are what getObs()/getAllObs() report, and the services save and
+			// void them, so the set must not depend on the caller's privileges
+			for (Obs child : obsParent.getNoAuthGroupMembers(false)) {
 				if (!child.getVoided()) {
 					if (!child.isObsGrouping()) {
 						leaves.add(child);
@@ -257,7 +259,8 @@ public class Encounter extends BaseChangeableOpenmrsData {
 		if (includedVoided || (!obsParent.getVoided())) {
 			leaves.add(obsParent);
 			if (obsParent.hasGroupMembers()) {
-				for (Obs child : obsParent.getGroupMembers(includedVoided)) {
+				// unfiltered: getAllFlattenedObs feeds the encounter void cascade
+				for (Obs child : obsParent.getNoAuthGroupMembers(includedVoided)) {
 					leaves.addAll(getFlattenedObsLeaves(child, includedVoided));
 				}
 			}
@@ -401,8 +404,10 @@ public class Encounter extends BaseChangeableOpenmrsData {
 				}
 
 				//propagate attributes to  all group members as well
-				if (o.getGroupMembers(true) != null) {
-					obsToUpdate.addAll(o.getGroupMembers());
+				// unfiltered: these are about to be saved, and a member missing the caller's privileges
+				// would be written with a stale person, location or encounter
+				if (o.getNoAuthGroupMembers(true) != null) {
+					obsToUpdate.addAll(o.getNoAuthGroupMembers(false));
 				}
 			}
 

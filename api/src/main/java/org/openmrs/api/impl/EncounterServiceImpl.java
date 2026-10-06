@@ -285,7 +285,7 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 	private void removeGivenObsAndTheirGroupMembersFromEncounter(Collection<Obs> obsToRemove, Encounter encounter) {
 		for (Obs o : obsToRemove) {
 			encounter.removeObs(o);
-			Set<Obs> groupMembers = o.getGroupMembers(true);
+			Set<Obs> groupMembers = o.getNoAuthGroupMembers(true);
 			if (CollectionUtils.isNotEmpty(groupMembers)) {
 				removeGivenObsAndTheirGroupMembersFromEncounter(groupMembers, encounter);
 			}
@@ -301,7 +301,7 @@ public class EncounterServiceImpl extends BaseOpenmrsService implements Encounte
 	private void addGivenObsAndTheirGroupMembersToEncounter(Collection<Obs> obsToAdd, Encounter encounter) {
 		for (Obs o : obsToAdd) {
 			encounter.addObs(o);
-			Set<Obs> groupMembers = o.getGroupMembers(true);
+			Set<Obs> groupMembers = o.getNoAuthGroupMembers(true);
 			if (CollectionUtils.isNotEmpty(groupMembers)) {
 				addGivenObsAndTheirGroupMembersToEncounter(groupMembers, encounter);
 			}

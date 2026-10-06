@@ -231,7 +231,7 @@ public class ObsValidator implements Validator {
 			errors.rejectValue("groupMembers", "Obs.error.groupContainsItself");
 		}
 
-		Set<Obs> groupMembers = obs.getGroupMembers();
+		Set<Obs> groupMembers = obs.getNoAuthGroupMembers(false);
 		if (groupMembers != null && !groupMembers.isEmpty()) {
 			ancestors.add(obs);
 			for (Obs child : groupMembers) {

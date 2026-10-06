@@ -28,10 +28,12 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.HibernateUtil;
 import org.openmrs.obs.ComplexData;
 import org.openmrs.obs.ComplexObsHandler;
+import org.openmrs.security.Authorize;
 import org.openmrs.util.DateUtil;
 import org.openmrs.util.Format;
 import org.openmrs.util.Format.FORMAT_TYPE;
 import org.openmrs.util.OpenmrsUtil;
+import org.openmrs.util.PrivilegeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,7 +232,10 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 		newObs.setVoidReason(obsToCopy.getVoidReason());
 		newObs.setStatus(obsToCopy.getStatus());
 		newObs.setInterpretation(obsToCopy.getInterpretation());
-		newObs.setOrder(obsToCopy.getOrder());
+		// the field, not getOrder(): copying an obs is machinery, and must not require Get Orders of
+		// whoever is editing it - going through the guarded getter would deny the edit, or with a masking
+		// guard drop the order silently
+		newObs.setOrder(obsToCopy.order);
 
 		newObs.setValueComplex(obsToCopy.getValueComplex());
 		newObs.setComplexData(obsToCopy.getComplexData());
@@ -251,7 +256,7 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 
 		// Copy list of all members, including voided, and put them in respective groups
 		if (obsToCopy.hasGroupMembers(true)) {
-			for (Obs member : obsToCopy.getGroupMembers(true)) {
+			for (Obs member : obsToCopy.getNoAuthGroupMembers(true)) {
 				// if the obs hasn't been saved yet, no need to duplicate it
 				if (member.getObsId() == null) {
 					newObs.addGroupMember(member);
@@ -425,8 +430,10 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 	 * @return true if this is the parent group of other Obs
 	 */
 	public boolean hasGroupMembers(boolean includeVoided) {
+		// unfiltered: whether this obs is a group is structure, not data the caller reads, and
+		// isObsGrouping() gates persistence and cascades
 		// ! symbol used because if it's not empty, we want true
-		return !org.springframework.util.CollectionUtils.isEmpty(getGroupMembers(includeVoided));
+		return !org.springframework.util.CollectionUtils.isEmpty(getNoAuthGroupMembers(includeVoided));
 	}
 
 	/**
@@ -437,7 +444,8 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 	 * If it's not a group (i.e. {@link #getConcept()}.{@link org.openmrs.Concept#getSet()} is not true,
 	 * then this returns null.
 	 *
-	 * @return a Set&lt;Obs&gt; of the members of this group.
+	 * @return a Set&lt;Obs&gt; of the members of this group, filtered to the ones the current user may
+	 *         read - see {@link #getGroupMembers(boolean)}
 	 * @see #addGroupMember(Obs)
 	 * @see #hasGroupMembers()
 	 */
@@ -452,11 +460,30 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 	 * true or false respectively.
 	 * <p>
 	 * <strong>Should</strong> Get all group members if passed true, and non-voided if passed false
+	 * <p>
+	 * Members the current user may not read are left out, so this returns a copy - adding to it does
+	 * not add to the group, and core machinery that must see every member uses
+	 * {@link #getNoAuthGroupMembers(boolean)} instead.
 	 *
 	 * @param includeVoided
 	 * @return the set of group members in this obs group
 	 */
 	public Set<Obs> getGroupMembers(boolean includeVoided) {
+		return Authorize.filter("hasPermission(filterObject, '" + PrivilegeConstants.GET_OBS + "')", this,
+		    getNoAuthGroupMembers(includeVoided));
+	}
+
+	/**
+	 * Every group member, with no privilege filtering, for core machinery - persistence, validation,
+	 * cascades, copying - that has to see members the caller may not be allowed to read. Filtering
+	 * there would turn a guard on a read path into one on a write path: members a caller cannot see
+	 * would not be saved, voided or validated with the rest of the group.
+	 *
+	 * @param includeVoided as {@link #getGroupMembers(boolean)}
+	 * @return the live set when {@code includeVoided}, otherwise a copy without the voided members
+	 * @since 3.0.0
+	 */
+	public Set<Obs> getNoAuthGroupMembers(boolean includeVoided) {
 		if (includeVoided) {
 			//just return all group members
 			return groupMembers;
@@ -511,7 +538,7 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 			return;
 		}
 
-		if (getGroupMembers() == null) {
+		if (groupMembers == null) {
 			groupMembers = new HashSet<>();
 		}
 
@@ -537,7 +564,7 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 	 * @see #getGroupMembers()
 	 */
 	public void removeGroupMember(Obs member) {
-		if (member == null || getGroupMembers() == null) {
+		if (member == null || groupMembers == null) {
 			return;
 		}
 
@@ -595,8 +622,12 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 
 	/**
 	 * @return Returns the order.
+	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
+	 *             {@code Get Orders}, or a module's rule for Order denies this one; the property is
+	 *             mapped {@code access="field"} so Hibernate reads it without going through this check
 	 */
 	public Order getOrder() {
+		Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ORDERS + "')", this, order);
 		return order;
 	}
 

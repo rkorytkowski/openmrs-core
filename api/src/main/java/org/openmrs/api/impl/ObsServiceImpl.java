@@ -205,7 +205,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService, Re
 
 		ObsService os = Context.getObsService();
 		boolean refreshNeeded = false;
-		for (Obs o : obs.getGroupMembers(true)) {
+		for (Obs o : obs.getNoAuthGroupMembers(true)) {
 			if (o.getId() == null) {
 				os.saveObs(o, null);
 			} else {
@@ -231,7 +231,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService, Re
 	private void evictObsAndChildren(Obs obs) {
 		Context.evictFromSession(obs);
 		if (obs.hasGroupMembers()) {
-			for (Obs member : obs.getGroupMembers()) {
+			for (Obs member : obs.getNoAuthGroupMembers(false)) {
 				evictObsAndChildren(member);
 			}
 		}
@@ -247,7 +247,7 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService, Re
 
 	private void saveObsGroup(Obs obs, String changeMessage) {
 		if (obs.isObsGrouping()) {
-			for (Obs o : obs.getGroupMembers(true)) {
+			for (Obs o : obs.getNoAuthGroupMembers(true)) {
 				Context.getObsService().saveObs(o, changeMessage);
 			}
 		}
