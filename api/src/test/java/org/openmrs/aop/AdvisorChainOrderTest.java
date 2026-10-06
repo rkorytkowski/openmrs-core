@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.openmrs.annotation.Authorized;
+import org.openmrs.security.AuthorizationProxyUnwrappingAdvice;
 import org.openmrs.security.OpenmrsSecurityConfig;
 import org.openmrs.test.jupiter.BaseContextSensitiveTest;
 import org.openmrs.util.PrivilegeConstants;
@@ -103,6 +104,7 @@ public class AdvisorChainOrderTest extends BaseContextSensitiveTest {
 			Class<?> advice = advisor.getAdvice().getClass();
 			boolean known = AuthorizationAdvice.class.isAssignableFrom(advice)
 			        || LoggingAdvice.class.isAssignableFrom(advice) || RequiredDataAdvice.class.isAssignableFrom(advice)
+			        || AuthorizationProxyUnwrappingAdvice.class.isAssignableFrom(advice)
 			        || CacheInterceptor.class.isAssignableFrom(advice)
 			        || TransactionInterceptor.class.isAssignableFrom(advice);
 			if (!known) {

@@ -28,6 +28,7 @@ import org.openmrs.util.PrivilegeConstants;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authorization.method.AuthorizeReturnObject;
 
 /**
  * The ObsService deals with saving and getting Obs to/from the database Usage: <pre>
@@ -63,6 +64,7 @@ public interface ObsService extends OpenmrsService {
 	 *             permission
 	 */
 	@PreAuthorize("hasPermission(#obsId, 'Obs', '" + PrivilegeConstants.GET_OBS + "')")
+	@AuthorizeReturnObject
 	public Obs getObs(Integer obsId) throws APIException;
 
 	/**

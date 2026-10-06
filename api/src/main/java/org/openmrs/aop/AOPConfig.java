@@ -22,6 +22,7 @@ import org.springframework.cache.interceptor.CacheInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -107,6 +108,25 @@ public class AOPConfig {
 	@Bean
 	public Advisor requiredDataAdvisor(RequiredDataAdvice advice) {
 		return createAdvisor(advice, 3);
+	}
+
+	/**
+	 * TRUNK-6803 spike: unwraps {@code @AuthorizeReturnObject} proxies on the way into a service or a
+	 * DAO. Ordered ahead of {@link #requiredDataAdvisor} (3), because that advice matches the
+	 * argument's class name and reads child collections off its fields - neither of which a delegating
+	 * proxy can satisfy.
+	 */
+	@Bean
+	public Advisor authorizationProxyUnwrappingAdvisor(org.openmrs.security.AuthorizationProxyUnwrappingAdvice advice) {
+		StaticMethodMatcherPointcutAdvisor advisor = new StaticMethodMatcherPointcutAdvisor(advice) {
+
+			@Override
+			public boolean matches(Method method, Class<?> targetClass) {
+				return targetClass.isAnnotationPresent(Repository.class) || targetClass.isAnnotationPresent(Service.class);
+			}
+		};
+		advisor.setOrder(0);
+		return advisor;
 	}
 
 	public Advisor createAdvisor(Advice advice, Integer order) {

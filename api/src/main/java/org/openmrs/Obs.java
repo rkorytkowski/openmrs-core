@@ -32,8 +32,10 @@ import org.openmrs.util.DateUtil;
 import org.openmrs.util.Format;
 import org.openmrs.util.Format.FORMAT_TYPE;
 import org.openmrs.util.OpenmrsUtil;
+import org.openmrs.util.PrivilegeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * An observation is a single unit of clinical information. <br>
@@ -595,7 +597,11 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 
 	/**
 	 * @return Returns the order.
+	 * @throws org.springframework.security.access.AccessDeniedException if this {@link Obs} was
+	 *             obtained from an {@code @AuthorizeReturnObject} method and the current user lacks
+	 *             {@code Get Orders}
 	 */
+	@PreAuthorize("hasAuthority('" + PrivilegeConstants.GET_ORDERS + "')")
 	public Order getOrder() {
 		return order;
 	}
