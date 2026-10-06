@@ -81,7 +81,8 @@
 		<many-to-one name="valueCoded" class="Concept" column="value_coded" />
 		<many-to-one name="valueCodedName" class="ConceptName" column="value_coded_name_id" />
 		<many-to-one name="valueDrug" class="Drug" column="value_drug" />
-		<many-to-one name="order" class="Order" column="order_id" cascade="none" />
+		<!-- access="field": getOrder() enforces Get Orders, and Hibernate must not depend on it -->
+		<many-to-one name="order" class="Order" column="order_id" cascade="none" access="field" />
 		<many-to-one name="location" class="Location" not-null="false" column="location_id" />
 		<many-to-one name="encounter" class="Encounter" column="encounter_id" />
 		<many-to-one name="creator" class="User" not-null="true" />

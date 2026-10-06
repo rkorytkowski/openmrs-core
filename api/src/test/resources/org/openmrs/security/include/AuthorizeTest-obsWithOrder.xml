@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+
+    This Source Code Form is subject to the terms of the Mozilla Public License,
+    v. 2.0. If a copy of the MPL was not distributed with this file, You can
+    obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+    the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+
+    Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+    graphic logo is a trademark of OpenMRS Inc.
+
+-->
+<!-- No obs in the standard dataset references an order, which is the whole subject of
+     AuthorizeTest. Order 1 is the standard dataset's own order for patient 7, encounter 3. -->
+<dataset>
+    <obs obs_id="1000" status="FINAL" person_id="7" concept_id="88" order_id="1" encounter_id="3"
+         obs_datetime="2008-08-08 00:00:00.0" value_numeric="50.0" creator="1"
+         date_created="2008-08-08 00:00:00.0" voided="false" uuid="9b6639b2-5785-4603-a364-075c2d61cd51"/>
+
+    <!-- An obs group for the group-member filter: concept 23 is the standard dataset's own set
+         concept, and a group obs carries no value of its own. Its two members are obs in their own
+         right, which is what lets a rule hide one of them and not the other. -->
+    <obs obs_id="1001" status="FINAL" person_id="7" concept_id="23" encounter_id="3"
+         obs_datetime="2008-08-08 00:00:00.0" creator="1" date_created="2008-08-08 00:00:00.0"
+         voided="false" uuid="4a1b3c1e-0b1f-4f4a-9d6a-5c2a1b6f0001"/>
+    <obs obs_id="1002" status="FINAL" person_id="7" concept_id="88" encounter_id="3" obs_group_id="1001"
+         obs_datetime="2008-08-08 00:00:00.0" value_numeric="60.0" creator="1"
+         date_created="2008-08-08 00:00:00.0" voided="false" uuid="4a1b3c1e-0b1f-4f4a-9d6a-5c2a1b6f0002"/>
+    <obs obs_id="1003" status="FINAL" person_id="7" concept_id="88" encounter_id="3" obs_group_id="1001"
+         obs_datetime="2008-08-08 00:00:00.0" value_numeric="70.0" creator="1"
+         date_created="2008-08-08 00:00:00.0" voided="false" uuid="4a1b3c1e-0b1f-4f4a-9d6a-5c2a1b6f0003"/>
+</dataset>

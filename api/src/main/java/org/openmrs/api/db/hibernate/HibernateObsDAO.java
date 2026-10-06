@@ -97,7 +97,7 @@ public class HibernateObsDAO implements ObsDAO {
 			// hibernate has a problem updating child collections
 			// if the parent object was already saved so we do it
 			// explicitly here
-			for (Obs member : obs.getGroupMembers()) {
+			for (Obs member : obs.getNoAuthGroupMembers(false)) {
 				if (member.getObsId() == null) {
 					saveObs(member);
 				}

@@ -145,6 +145,96 @@ both, so a module that still throws the deprecated exception keeps working.
    tests assert on that supertype rather than on `AuthorizationDeniedException`.
 5. Run `mvn -pl api test` (plus `-pl web` if a web class is involved) and `mvn spotless:apply`.
 
+## Guarding a Field Rather Than a Method
+
+Some data needs a privilege of its own, beyond the one guarding the service method that returned the
+object: reading an `Obs` takes `Get Obs`, but reading the `Order` it points at should take
+`Get Orders`. Enforce that in the getter, with `Authorize`:
+
+```java
+public Order getOrder() {
+    Authorize.requirePrivilege(PrivilegeConstants.GET_ORDERS);
+    return order;
+}
+```
+
+Use `Authorize.maskPrivilege(privilege, value)` instead where a missing value is better than a failure -
+a field being serialized for display, say.
+
+For anything a privilege name cannot express, `require` takes SpEL evaluated by the same
+`MethodSecurityExpressionHandler` as `@PreAuthorize`, so `hasAuthority`, `hasAnyAuthority`, `hasRole`,
+`isAuthenticated` and `hasPermission` - including the rules a module contributes - mean exactly what
+they do in an annotation:
+
+```java
+public Order getOrder() {
+    Authorize.require("hasPermission(#target, 'Get Orders')", this);
+    return order;
+}
+```
+
+A getter has no method signature to draw variables from, so the expression sees `#target` - the object
+whose getter is running - rather than named parameters. `mask(expression, target, value)` is
+the null-returning counterpart, and binds the value as `returnObject` as `@PostAuthorize` would.
+
+Pass the value to `require(expression, target, value)` to get that binding while still denying - for a
+rule about the value rather than about its holder, since `hasPermission(returnObject, ...)` reaches a
+module's `DomainObjectAuthorizationRule` for the returned type where `hasPermission(#target, ...)`
+reaches the one for the entity doing the returning. `Obs.getOrder()` wants the former: the privilege it
+asks for is `Get Orders`, so the object a rule should get to decide about is the order.
+
+`filter(expression, target, collection)` is the `@PostFilter` counterpart, binding each
+element to `filterObject` in turn:
+
+```java
+public Set<Obs> getGroupMembers(boolean includeVoided) {
+    return Authorize.filter("hasPermission(filterObject, 'Get Obs')", this, getNoAuthGroupMembers(includeVoided));
+}
+```
+
+It returns a copy and never touches the collection it is given, which is the difference that matters in
+a getter. A service method filters a fresh query result, but a getter hands back the entity's own
+collection, and Spring filters by clearing the collection and adding back what survived - on
+`Patient.identifiers`, mapped `cascade="all-delete-orphan"`, that empties the patient and deletes every
+identifier row at the next flush (`AuthorizeTest` pins this down). So a filtered getter returns a
+copy: a caller cannot add to the entity through it, and a lazy collection is initialized in full.
+
+Per-element decisions need a `DomainObjectAuthorizationRule` for the element type that discriminates
+between instances. Without one, `hasPermission` falls back to a plain privilege check - the same answer
+for every element, so all of them or none, no better than returning an empty collection. There is no
+privilege-name overload of the filter for that reason.
+
+Prefer the privilege name where it suffices. An expression costs about the same per evaluation as an
+annotation does per method call (~4.5us here, three quarters of it building the evaluation context,
+which cannot be cached without pinning a stale `Authentication`), against ~0.5us for a privilege name
+- and a getter can be called in a tight loop where a service method would not be. Spring Security's `@AuthorizeReturnObject` is the obvious
+alternative and is not used here: it returns a proxy, and a proxied entity loses reference and
+`equals` identity, is rejected by Hibernate when it reaches a cascade, and is invisible to the
+field-reflective cascade machinery in `RequiredDataAdvice` (see TRUNK-6803).
+
+Two rules come with a guarded getter, because a guard on a read path must never become a guard on a
+write path:
+
+- **Map the property `access="field"`.** Otherwise Hibernate loads and flushes the entity through the
+  guarded getter, making persistence depend on the current user's privileges.
+- **Read the field, not the getter, in machinery.** Code that copies or moves the value rather than
+  using it - `Obs.newInstance` is one - must read the field directly, or editing an obs would be
+  denied to anyone without `Get Orders`. Where that machinery sits outside the entity, as the obs
+  services, the DAO and `ObsValidator` do, the entity has to offer it an unfiltered accessor:
+  `Obs.getNoAuthGroupMembers(boolean)` is what every save, void, reparent and validation path
+  reads, since a member the caller cannot see must still be saved, voided and validated with the
+  rest of the group.
+- **Keep structural predicates unfiltered.** `Obs.hasGroupMembers(boolean)` and
+  `Obs.isObsGrouping()` answer whether an obs is a group at all, which drives how it is persisted
+  and cascaded, so they read the stored collection. Only the contents are filtered, meaning a caller
+  entitled to no member sees a group with an empty membership rather than a non-group.
+
+Reflective property walkers read every getter, so they see the guard: `OpenmrsObjectSaveHandler` only
+escapes it because it filters to `String` properties, and `BeanUtils.copyProperties` on an entity with
+a guarded getter will throw for a caller who lacks the privilege. Outside an open session the guard
+permits the read - there is no `UserContext` to check, and a domain object has to stay usable as a
+plain bean.
+
 ## Pitfalls
 
 | Pitfall | Why | Fix |
@@ -156,6 +246,7 @@ both, so a module that still throws the deprecated exception keeps working.
 | A criteria-object overload bypasses a rule the parameter-list overload enforces | `getObservations(ObsSearchCriteria)` is a second route to the same query | name the criteria's own subject: `hasPermission(#obsSearchCriteria?.whom, privilege)`, with `?.` so a null criteria stays a privilege-only check instead of failing in SpEL |
 | A write survives a `@PostAuthorize` denial | method security runs outside the transaction boundary | guard writes with `@PreAuthorize` |
 | A `@PostFilter`ed `@Cacheable` method serves one user's filtered view to everyone | `@PostFilter` filters in place | key the cache by the caller (`UserKeyGenerator.BEAN_NAME`) |
+| A rule is not consulted for a lazy association | `hasPermission` selects rules by the target's resolved type - the declared class while the value is an uninitialized proxy (`Obs.getOrder()` resolves as `Order`), the concrete subclass once it is loaded (`DrugOrder`) | register a rule bean for the declared type and for each concrete subtype |
 | A module's error handling stops recognizing a denial | `@Authorized` denies with `AccessDeniedException` as of 3.0.0, not `APIAuthenticationException` | handle `AccessDeniedException`; `ExceptionUtil.rethrowAPIAuthenticationException` covers both |
 | Both `@Authorized` and `@PreAuthorize` on one method | both advisors run, so both must pass | keep exactly one of them |
 | `@Authorized` on a class instead of a method | `AuthorizationAdvice` only resolves method-level annotations | annotate methods; `@PreAuthorize` may be placed on the type if a class-wide default is wanted |

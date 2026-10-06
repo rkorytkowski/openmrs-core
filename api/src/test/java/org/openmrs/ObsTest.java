@@ -10,6 +10,7 @@
 package org.openmrs;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -73,7 +74,9 @@ public class ObsTest {
 		Obs obs = new Obs(id);
 		List<Field> fields = Reflect.getAllFields(Obs.class);
 		for (Field field : fields) {
-			if (IGNORED_FIELDS.contains(field.getName())) {
+			// a static field is not part of an instance's state, so it has nothing to do with dirtiness -
+			// skipped by modifier rather than by name, so a new constant on Obs does not break this test
+			if (Modifier.isStatic(field.getModifiers()) || IGNORED_FIELDS.contains(field.getName())) {
 				continue;
 			}
 			setFieldValue(obs, field, false);
@@ -739,7 +742,9 @@ public class ObsTest {
 		//call each setter and check that dirty has been set to true for each
 		for (Field field : fields) {
 			String fieldName = field.getName();
-			if (IGNORED_FIELDS.contains(fieldName)) {
+			// as in createObs: a static field is not instance state, so changing one says nothing about
+			// dirtiness
+			if (Modifier.isStatic(field.getModifiers()) || IGNORED_FIELDS.contains(fieldName)) {
 				continue;
 			}
 
