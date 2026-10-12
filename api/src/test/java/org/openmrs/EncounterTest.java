@@ -424,7 +424,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(encounter);
+		childObs.setNoAuthEncounter(encounter);
 		encounter.addObs(childObs);
 
 		// do the check
@@ -449,7 +449,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(encounter);
+		childObs.setNoAuthEncounter(encounter);
 		encounter.addObs(childObs);
 
 		// do the check
@@ -474,7 +474,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		// do the check
@@ -559,7 +559,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		//remove the obsGrouping, so that both obs are now just children of the Encounter
@@ -584,7 +584,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		//remove the obsGrouping, so that both obs are now just children of the Encounter
@@ -610,7 +610,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		//remove the obsGrouping, so that both obs are now just children of the Encounter
@@ -635,7 +635,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		// make the obs two levels deep
@@ -688,7 +688,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		// make the obs two levels deep
@@ -730,7 +730,7 @@ public class EncounterTest extends BaseContextMockTest {
 		parentObs.addGroupMember(childObs);
 
 		// add the child obs directly to the encounter as well
-		childObs.setEncounter(enc);
+		childObs.setNoAuthEncounter(enc);
 		enc.addObs(childObs);
 
 		// make the obs two levels deep
@@ -797,7 +797,8 @@ public class EncounterTest extends BaseContextMockTest {
 		Encounter encounter = new Encounter();
 		Obs obs = new Obs();
 		encounter.addObs(obs);
-		assertTrue(obs.getEncounter().equals(encounter));
+		// the unguarded read: this is about addObs wiring the encounter, not about who may read it
+		assertTrue(obs.getNoAuthEncounter().equals(encounter));
 	}
 
 	/**

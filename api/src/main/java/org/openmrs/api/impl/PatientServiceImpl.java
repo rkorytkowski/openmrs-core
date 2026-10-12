@@ -720,7 +720,8 @@ public class PatientServiceImpl extends BaseOpenmrsService implements PatientSer
 		// TODO: this should be a copy, not a move
 		ObsService obsService = Context.getObsService();
 		for (Obs obs : obsService.getObservationsByPerson(notPreferred)) {
-			if (obs.getEncounter() == null && !obs.getVoided()) {
+			// unguarded: merging is machinery, and must not require Get Encounters of whoever merges
+			if (obs.getNoAuthEncounter() == null && !obs.getVoided()) {
 				obs.setPerson(preferred);
 				Obs persisted = obsService.saveObs(obs, "Merged from patient #" + notPreferred.getPatientId());
 				mergedData.addMovedIndependentObservation(persisted.getUuid());

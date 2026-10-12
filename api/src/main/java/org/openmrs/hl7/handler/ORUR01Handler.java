@@ -267,7 +267,8 @@ public class ORUR01Handler implements Application {
 				obsGrouper = new Obs();
 				obsGrouper.setConcept(obrConcept);
 				obsGrouper.setPerson(encounter.getPatient());
-				obsGrouper.setEncounter(encounter);
+				// unguarded: HL7 ingest builds the graph, and already holds the encounter
+				obsGrouper.setNoAuthEncounter(encounter);
 				Date datetime = getDatetime(obr);
 				if (datetime == null) {
 					datetime = encounter.getEncounterDatetime();
@@ -627,7 +628,8 @@ public class ORUR01Handler implements Application {
 		Obs obs = new Obs();
 		obs.setPerson(encounter.getPatient());
 		obs.setConcept(concept);
-		obs.setEncounter(encounter);
+		// unguarded: as above, HL7 ingest builds the graph
+		obs.setNoAuthEncounter(encounter);
 		obs.setObsDatetime(datetime);
 		obs.setLocation(encounter.getLocation());
 		obs.setCreator(encounter.getCreator());

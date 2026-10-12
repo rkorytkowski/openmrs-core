@@ -389,7 +389,9 @@ public class Encounter extends BaseChangeableOpenmrsData {
 				}
 				seenIt.add(o);
 
-				o.setEncounter(this);
+				// unguarded: wiring an obs into this encounter is graph construction, and the caller
+				// already holds the encounter
+				o.setNoAuthEncounter(this);
 
 				//if the attribute was already set, preserve it
 				//if not, inherit the values from the encounter
@@ -884,7 +886,9 @@ public class Encounter extends BaseChangeableOpenmrsData {
 		//obs
 		for (Obs obs : getAllObs()) {
 			Obs obsCopy = Obs.newInstance(obs);
-			obsCopy.setEncounter(target);
+			// unguarded: the copy still carries the source encounter, so the guard would check a detach
+			// the caller is not performing
+			obsCopy.setNoAuthEncounter(target);
 			obsCopy.setPerson(patient);
 			target.addObs(obsCopy);
 		}

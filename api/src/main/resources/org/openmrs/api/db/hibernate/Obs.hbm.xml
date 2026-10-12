@@ -84,7 +84,8 @@
 		<!-- access="field": getOrder() enforces Get Orders, and Hibernate must not depend on it -->
 		<many-to-one name="order" class="Order" column="order_id" cascade="none" access="field" />
 		<many-to-one name="location" class="Location" not-null="false" column="location_id" />
-		<many-to-one name="encounter" class="Encounter" column="encounter_id" />
+		<!-- access="field": getEncounter() enforces Get Encounters, and Hibernate must not depend on it -->
+		<many-to-one name="encounter" class="Encounter" column="encounter_id" access="field" />
 		<many-to-one name="creator" class="User" not-null="true" />
 		<many-to-one name="voidedBy" class="User" column="voided_by" />
 		

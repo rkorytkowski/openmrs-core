@@ -223,7 +223,9 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 		newObs.setValueModifier(obsToCopy.getValueModifier());
 		newObs.setValueText(obsToCopy.getValueText());
 		newObs.setComment(obsToCopy.getComment());
-		newObs.setEncounter(obsToCopy.getEncounter());
+		// the fields, not getEncounter()/setEncounter(): see the Order copy below - copying must not
+		// require Get Encounters of whoever is editing the obs
+		newObs.encounter = obsToCopy.encounter;
 		newObs.setCreator(obsToCopy.getCreator());
 		newObs.setDateCreated(obsToCopy.getDateCreated());
 		newObs.setVoided(obsToCopy.getVoided());
@@ -232,10 +234,10 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 		newObs.setVoidReason(obsToCopy.getVoidReason());
 		newObs.setStatus(obsToCopy.getStatus());
 		newObs.setInterpretation(obsToCopy.getInterpretation());
-		// the field, not getOrder(): copying an obs is machinery, and must not require Get Orders of
-		// whoever is editing it - going through the guarded getter would deny the edit, or with a masking
-		// guard drop the order silently
-		newObs.setOrder(obsToCopy.order);
+		// the fields, not getOrder()/setOrder(): copying an obs is machinery, and must not require
+		// Get Orders of whoever is editing it - going through either guarded accessor would deny the
+		// edit, or with a masking guard drop the order silently
+		newObs.order = obsToCopy.order;
 
 		newObs.setValueComplex(obsToCopy.getValueComplex());
 		newObs.setComplexData(obsToCopy.getComplexData());
@@ -322,15 +324,60 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 
 	/**
 	 * @return Returns the encounter.
+	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
+	 *             {@code Get Encounters}, or a module's rule for Encounter denies this one; the
+	 *             property is mapped {@code access="field"} so Hibernate reads it without going through
+	 *             this check
 	 */
 	public Encounter getEncounter() {
+		Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ENCOUNTERS + "')", this, encounter);
+		return encounter;
+	}
+
+	/**
+	 * The encounter with no privilege check, for core machinery - persistence, cascades, merging - that
+	 * has to see it even when the caller may not read it. Guarding there would turn a read guard into a
+	 * write one: an obs would fail to save or merge because whoever is editing it cannot read the
+	 * encounter it belongs to.
+	 *
+	 * @return the encounter, unguarded
+	 * @since 3.0.0
+	 */
+	public Encounter getNoAuthEncounter() {
 		return encounter;
 	}
 
 	/**
 	 * @param encounter The encounter to set.
+	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
+	 *             {@code Get Encounters}, or a module's rule for Encounter denies the encounter being
+	 *             attached or the one being replaced; as with {@link #setOrder(Order)} changing the
+	 *             association is a detach and an attach both, so each end is checked and an assignment
+	 *             that changes nothing is not. The property is mapped {@code access="field"} so
+	 *             Hibernate writes it without going through this check, and core machinery that wires
+	 *             an obs into an encounter uses {@link #setNoAuthEncounter(Encounter)}
 	 */
 	public void setEncounter(Encounter encounter) {
+		if (!OpenmrsUtil.nullSafeEquals(this.encounter, encounter)) {
+			Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ENCOUNTERS + "')", this,
+			    this.encounter);
+			Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ENCOUNTERS + "')", this, encounter);
+		}
+		markAsDirty(this.encounter, encounter);
+		this.encounter = encounter;
+	}
+
+	/**
+	 * Sets the encounter with no privilege check, the write counterpart of
+	 * {@link #getNoAuthEncounter()}, for core machinery that wires an obs into an encounter -
+	 * {@link Encounter#addObs(Obs)}, HL7 ingest, concept-proposal conversion, copying between
+	 * encounters. Those callers already hold the {@link Encounter} they are assigning, so a guard here
+	 * would protect nothing while making graph construction depend on the caller's privileges.
+	 *
+	 * @param encounter the encounter to set, unguarded
+	 * @since 3.0.0
+	 */
+	public void setNoAuthEncounter(Encounter encounter) {
 		markAsDirty(this.encounter, encounter);
 		this.encounter = encounter;
 	}
@@ -633,8 +680,20 @@ public class Obs extends BaseFormRecordableOpenmrsData {
 
 	/**
 	 * @param order The order to set.
+	 * @throws org.springframework.security.access.AccessDeniedException if the current user lacks
+	 *             {@code Get Orders}, or a module's rule for Order denies the order being attached or
+	 *             the one being replaced; changing the association is a detach and an attach both, so
+	 *             each end is checked, while an assignment that changes nothing is not. The property is
+	 *             mapped {@code access="field"} so Hibernate writes it without going through this check
 	 */
 	public void setOrder(Order order) {
+		if (!OpenmrsUtil.nullSafeEquals(this.order, order)) {
+			// the order being detached as much as the one being attached: a caller who cannot see the
+			// current order should not be able to replace it either, and hasPermission(null, ...) still
+			// asks for the privilege, so clearing it is covered too
+			Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ORDERS + "')", this, this.order);
+			Authorize.require("hasPermission(returnObject, '" + PrivilegeConstants.GET_ORDERS + "')", this, order);
+		}
 		markAsDirty(this.order, order);
 		this.order = order;
 	}

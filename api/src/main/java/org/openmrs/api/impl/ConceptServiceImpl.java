@@ -823,7 +823,8 @@ public class ConceptServiceImpl extends BaseOpenmrsService implements ConceptSer
 
 		if (cp.getObsConcept() != null) {
 			Obs ob = new Obs();
-			ob.setEncounter(cp.getEncounter());
+			// unguarded: building the obs for a proposal, not exposing the encounter to the caller
+			ob.setNoAuthEncounter(cp.getEncounter());
 			ob.setConcept(cp.getObsConcept());
 			ob.setValueCoded(cp.getMappedConcept());
 			if (cp.getState().equals(OpenmrsConstants.CONCEPT_PROPOSAL_SYNONYM)) {

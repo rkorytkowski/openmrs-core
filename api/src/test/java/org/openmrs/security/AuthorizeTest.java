@@ -17,6 +17,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openmrs.Encounter;
 import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -62,10 +63,13 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 
 	private static final int HIDDEN_GROUP_MEMBER = 1002;
 
-	/** Everything {@code saveObs} needs, deliberately excluding {@code Get Orders}. */
+	/**
+	 * Every privilege {@code saveObs} needs; a test withholds the one it is proving is not required.
+	 */
 	private static final String[] SAVE_PRIVILEGES = { PrivilegeConstants.GET_OBS, PrivilegeConstants.EDIT_OBS,
 	        PrivilegeConstants.GET_CONCEPTS, PrivilegeConstants.GET_ENCOUNTERS, PrivilegeConstants.GET_PERSONS,
-	        PrivilegeConstants.GET_PATIENTS, PrivilegeConstants.GET_LOCATIONS, PrivilegeConstants.GET_CONCEPT_DATATYPES };
+	        PrivilegeConstants.GET_PATIENTS, PrivilegeConstants.GET_LOCATIONS, PrivilegeConstants.GET_CONCEPT_DATATYPES,
+	        PrivilegeConstants.GET_ORDERS };
 
 	@BeforeEach
 	public void loadObsWithAnOrder() {
@@ -78,10 +82,14 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 	@Autowired
 	private HidingOrderRule hidingOrderRule;
 
+	@Autowired
+	private HidingEncounterRule hidingEncounterRule;
+
 	@AfterEach
 	public void stopHiding() {
 		hidingObsRule.setHiddenObsId(null);
 		hidingOrderRule.setHiddenOrderId(null);
+		hidingEncounterRule.setHiddenEncounterId(null);
 	}
 
 	@AfterEach
@@ -111,6 +119,147 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 		assertTrue(exception.getMessage().contains(PrivilegeConstants.GET_ORDERS), exception.getMessage());
 	}
 
+	@Test
+	public void getEncounter_shouldReturnTheEncounterWithThePrivilege() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+
+		// admin is a superuser
+		assertNotNull(obs.getEncounter());
+	}
+
+	@Test
+	public void getEncounter_shouldDenyWithoutThePrivilege() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+		Context.getUserContext().logout();
+
+		AccessDeniedException exception = assertThrows(AccessDeniedException.class, obs::getEncounter);
+
+		assertTrue(exception.getMessage().contains(PrivilegeConstants.GET_ENCOUNTERS), exception.getMessage());
+	}
+
+	@Test
+	public void getNoAuthEncounter_shouldReturnTheEncounterWithoutThePrivilege() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+		Context.getUserContext().logout();
+
+		assertNotNull(obs.getNoAuthEncounter(), "core machinery has to see the encounter regardless");
+	}
+
+	/** The encounter counterpart of {@link #saveObs_shouldWorkForACallerWhoCannotReadTheOrder()}. */
+	@Test
+	public void saveObs_shouldWorkForACallerWhoCannotReadTheEncounter() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+		String uuid = obs.getUuid();
+		authenticateWithout(PrivilegeConstants.GET_ENCOUNTERS);
+		obs.setComment("edited by a caller without Get Encounters");
+
+		Obs saved = Context.getObsService().saveObs(obs, "field-level guard");
+
+		assertNotNull(saved);
+		Context.addProxyPrivilege(PrivilegeConstants.GET_ENCOUNTERS);
+		try {
+			assertNotNull(Context.getObsService().getObsByUuid(saved.getUuid()).getEncounter(),
+			    "the encounter must survive a save by a caller who cannot read it");
+			assertNotNull(Context.getObsService().getObsByUuid(uuid).getEncounter(),
+			    "the voided original must keep its encounter too");
+		} finally {
+			Context.removeProxyPrivilege(PrivilegeConstants.GET_ENCOUNTERS);
+		}
+	}
+
+	@Test
+	public void setOrder_shouldSetTheOrderWithThePrivilege() {
+		Order order = Context.getObsService().getObs(OBS_WITH_ORDER).getOrder();
+		Obs target = new Obs();
+
+		// admin is a superuser
+		assertDoesNotThrow(() -> target.setOrder(order));
+		assertEquals(order, target.getOrder());
+	}
+
+	@Test
+	public void setOrder_shouldDenyAttachingAnOrderWithoutThePrivilege() {
+		Order order = Context.getObsService().getObs(OBS_WITH_ORDER).getOrder();
+		Obs target = new Obs();
+		Context.getUserContext().logout();
+
+		AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> target.setOrder(order));
+
+		assertTrue(exception.getMessage().contains(PrivilegeConstants.GET_ORDERS), exception.getMessage());
+	}
+
+	@Test
+	public void setOrder_shouldDenyDetachingAnOrderTheCallerCannotRead() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+		hidingOrderRule.setHiddenOrderId(obs.getOrder().getOrderId());
+
+		// the privilege is held - it is the rule that hides this particular order, so clearing it has to
+		// be refused on the strength of the order being replaced, not the one being set
+		assertThrows(AccessDeniedException.class, () -> obs.setOrder(null));
+	}
+
+	@Test
+	public void setOrder_shouldAllowAnAssignmentThatChangesNothingWithoutThePrivilege() {
+		Obs obs = new Obs();
+		Context.getUserContext().logout();
+
+		// nothing is attached or detached, so there is nothing to be entitled to
+		assertDoesNotThrow(() -> obs.setOrder(null));
+	}
+
+	@Test
+	public void setEncounter_shouldSetTheEncounterWithThePrivilege() {
+		Encounter encounter = Context.getObsService().getObs(OBS_WITH_ORDER).getEncounter();
+		Obs target = new Obs();
+
+		// admin is a superuser
+		assertDoesNotThrow(() -> target.setEncounter(encounter));
+		assertEquals(encounter, target.getEncounter());
+	}
+
+	@Test
+	public void setEncounter_shouldDenyAttachingAnEncounterWithoutThePrivilege() {
+		Encounter encounter = Context.getObsService().getObs(OBS_WITH_ORDER).getEncounter();
+		Obs target = new Obs();
+		Context.getUserContext().logout();
+
+		AccessDeniedException exception = assertThrows(AccessDeniedException.class, () -> target.setEncounter(encounter));
+
+		assertTrue(exception.getMessage().contains(PrivilegeConstants.GET_ENCOUNTERS), exception.getMessage());
+	}
+
+	@Test
+	public void setEncounter_shouldDenyDetachingAnEncounterTheCallerCannotRead() {
+		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
+		hidingEncounterRule.setHiddenEncounterId(obs.getNoAuthEncounter().getEncounterId());
+
+		// the privilege is held; it is the rule that hides this encounter, so the refusal can only come
+		// from the end being replaced
+		assertThrows(AccessDeniedException.class, () -> obs.setEncounter(null));
+	}
+
+	@Test
+	public void setNoAuthEncounter_shouldWireTheEncounterWithoutThePrivilege() {
+		Encounter encounter = Context.getObsService().getObs(OBS_WITH_ORDER).getEncounter();
+		Obs target = new Obs();
+		Context.getUserContext().logout();
+
+		assertDoesNotThrow(() -> target.setNoAuthEncounter(encounter));
+		assertEquals(encounter, target.getNoAuthEncounter());
+	}
+
+	/** {@link Encounter#addObs(Obs)} is graph construction, so it must not need the privilege. */
+	@Test
+	public void addObs_shouldWireTheEncounterForACallerWhoCannotReadIt() {
+		Encounter encounter = Context.getEncounterService().getEncounter(3);
+		Obs obs = new Obs();
+		obs.setConcept(Context.getConceptService().getConcept(88));
+		Context.getUserContext().logout();
+
+		assertDoesNotThrow(() -> encounter.addObs(obs));
+		assertEquals(encounter, obs.getNoAuthEncounter());
+	}
+
 	/** The point of the getter-body approach: no proxy, so the instance is the entity itself. */
 	@Test
 	public void getObs_shouldReturnTheEntityItselfRatherThanAProxy() {
@@ -130,7 +279,7 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 	public void saveObs_shouldWorkForACallerWhoCannotReadTheOrder() {
 		Obs obs = Context.getObsService().getObs(OBS_WITH_ORDER);
 		String uuid = obs.getUuid();
-		authenticateWithoutGetOrders();
+		authenticateWithout(PrivilegeConstants.GET_ORDERS);
 		obs.setComment("edited by a caller without Get Orders");
 
 		Obs saved = Context.getObsService().saveObs(obs, "field-level guard");
@@ -162,9 +311,9 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 
 	/**
 	 * A real authenticated user - a logged-out thread cannot save at all, since there is no user to
-	 * record as the creator - holding every privilege the save needs except {@code Get Orders}.
+	 * record as the creator - holding every privilege the save needs except {@code withheldPrivilege}.
 	 */
-	private void authenticateWithoutGetOrders() {
+	private void authenticateWithout(String withheldPrivilege) {
 		Person person = new Person();
 		person.addName(new PersonName("Guard", "", "Tester"));
 		person.setGender("U");
@@ -177,7 +326,11 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 
 		Context.getUserContext().logout();
 		Context.authenticate("guardTester", "Test1234");
-		Context.getUserContext().addProxyPrivilege(SAVE_PRIVILEGES);
+		for (String privilege : SAVE_PRIVILEGES) {
+			if (!privilege.equals(withheldPrivilege)) {
+				Context.getUserContext().addProxyPrivilege(privilege);
+			}
+		}
 	}
 
 	@Test
@@ -482,6 +635,37 @@ public class AuthorizeTest extends BaseContextSensitiveTest {
 	 * a {@code DrugOrder}, so a module has to register for the subtypes as well to cover a caller who
 	 * loaded the order before the obs.
 	 */
+	@Component
+	public static class HidingEncounterRule implements DomainObjectAuthorizationRule {
+
+		private volatile Integer hiddenEncounterId;
+
+		public void setHiddenEncounterId(Integer hiddenEncounterId) {
+			this.hiddenEncounterId = hiddenEncounterId;
+		}
+
+		@Override
+		public Class<?> getTargetType() {
+			return Encounter.class;
+		}
+
+		@Override
+		public boolean isAuthorized(Authentication authentication, Object targetDomainObject, Object permission) {
+			return !(targetDomainObject instanceof Encounter encounter) || !hidden(encounter.getEncounterId(), permission);
+		}
+
+		@Override
+		public boolean isAuthorized(Authentication authentication, Serializable targetId, Class<?> targetType,
+		        Object permission) {
+			return !hidden(targetId, permission);
+		}
+
+		private boolean hidden(Object encounterId, Object permission) {
+			return hiddenEncounterId != null && hiddenEncounterId.equals(encounterId)
+			        && PrivilegeConstants.GET_ENCOUNTERS.equals(permission);
+		}
+	}
+
 	@Component
 	public static class HidingOrderRule implements DomainObjectAuthorizationRule {
 

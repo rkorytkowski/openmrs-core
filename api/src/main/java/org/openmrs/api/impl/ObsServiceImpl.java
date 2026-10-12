@@ -127,7 +127,9 @@ public class ObsServiceImpl extends BaseOpenmrsService implements ObsService, Re
 	}
 
 	private void setPersonFromEncounter(Obs obs) {
-		Encounter encounter = obs.getEncounter();
+		// unguarded: this runs inside saveObs, so a caller who cannot read the encounter must still be
+		// able to save the obs
+		Encounter encounter = obs.getNoAuthEncounter();
 		if (encounter != null) {
 			obs.setPerson(encounter.getPatient());
 		}
